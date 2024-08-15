@@ -1,0 +1,61 @@
+services: 
+  verdaccio: 
+    container_name: verdaccio 
+    image: verdaccio/verdaccio:5.32 
+    ports: 
+      - 4873:4873 
+    restart: always 
+    volumes: 
+      - verdaccio-conf:/verdaccio/conf 
+      - verdaccio-storage:/verdaccio/storage 
+      - verdaccio-plugins:/verdaccio/plugins 
+    networks: 
+      - dev-network 
+  sonarqube: 
+    container_name: sonarqube 
+    image: sonarqube:lts-community 
+    restart: always 
+    environment: 
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube 
+      SONAR_JDBC_USERNAME: sonarqube 
+      SONAR_JDBC_PASSWORD: qwe1212!Q 
+    ports: 
+      - "9000:9000" 
+    volumes: 
+      - sonarqube-conf:/opt/sonarqube/conf 
+      - sonarqube-data:/opt/sonarqube/data 
+      - sonarqube-extensions:/opt/sonarqube/extensions 
+      - sonarqube-logs:/opt/sonarqube/logs 
+      - sonarqube-temp:/opt/sonarqube/temp 
+    networks: 
+      - dev-network 
+  sonarqube-db: 
+    container_name: sonarqube-db 
+    image: postgres:16.4 
+    ports: 
+      - 5432:5432 
+    restart: always 
+    environment: 
+      POSTGRES_USER: sonarqube 
+      POSTGRES_PASSWORD: qwe1212!Q 
+      POSTGRES_DB: sonarqube 
+    volumes: 
+      - postgres-data:/var/lib/postgresql/data 
+    networks: 
+      - dev-network 
+
+networks: 
+  dev-network: 
+    name: dev-network 
+    driver: bridge 
+
+volumes: 
+  verdaccio-conf: 
+  verdaccio-storage: 
+  verdaccio-plugins: 
+  sonarqube-conf: 
+  sonarqube-data: 
+  sonarqube-extensions: 
+  sonarqube-logs: 
+  sonarqube-temp: 
+  postgres-data:
