@@ -1,0 +1,144 @@
+services: 
+  Kafka-service01:
+    image: bitnami/kafka:3.8.0
+    restart: always
+    container_name: Kafka-service01
+    ports:
+      - 10001:9094
+    environment:
+      - KAFKA_KRAFT_CLUSTER_ID=HsDBs9l6UUmQq7Y5E6bNlw
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      # KRaft settings
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@Kafka-service01:9093,2@Kafka-service02:9093,3@Kafka-service03:9093
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      # Listeners
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://Kafka-service01:9092,EXTERNAL://127.0.0.1:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+    networks:
+      - backend
+    volumes:
+      - kafka_volume01:/bitnami/kafka"
+  Kafka-service02:
+    image: bitnami/kafka:3.8.0
+    restart: always
+    container_name: Kafka-service02
+    ports:
+      - 10002:9094
+    environment:
+      - KAFKA_KRAFT_CLUSTER_ID=HsDBs9l6UUmQq7Y5E6bNlw
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      # KRaft settings
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@Kafka-service01:9093,2@Kafka-service02:9093,3@Kafka-service03:9093
+      - KAFKA_CFG_NODE_ID=2
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      # Listeners
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://Kafka-service02:9092,EXTERNAL://127.0.0.1:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+    networks:
+      - backend
+    volumes:
+      - kafka_volume02:/bitnami/kafka"  
+  Kafka-service03:
+    image: bitnami/kafka:3.8.0
+    restart: always
+    container_name: Kafka-service03
+    ports:
+      - 10003:9094
+    environment:
+      - KAFKA_KRAFT_CLUSTER_ID=HsDBs9l6UUmQq7Y5E6bNlw
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      # KRaft settings
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@Kafka-service01:9093,2@Kafka-service02:9093,3@Kafka-service03:9093
+      - KAFKA_CFG_NODE_ID=3
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      # Listeners
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://Kafka-service03:9092,EXTERNAL://127.0.0.1:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+    networks:
+      - backend
+    volumes:
+      - kafka_volume03:/bitnami/kafka"        
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 9002:8080
+    depends_on:
+      - Kafka-service01
+      - Kafka-service02
+      - Kafka-service03
+    networks:
+      - backend
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=Local-Kafka-V38
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=Kafka-service01:9092,Kafka-service02:9092,Kafka-service03:9092
+      - DYNAMIC_CONFIG_ENABLED=true
+      - KAFKA_CLUSTERS_0_AUDIT_TOPICAUDITENABLED=true
+      - KAFKA_CLUSTERS_0_AUDIT_CONSOLEAUDITENABLED=true
+      #- KAFKA_CLUSTERS_0_METRICS_PORT=9999  
+  shoppingmall-db:
+    container_name: mysql
+    image: mysql:9.0.1
+    ports:
+      - 9001:3306
+    restart: always
+    environment:
+      TZ: Asia/Seoul
+      MYSQL_ROOT_PASSWORD: qwe1212!Q
+      MYSQL_DATABASE: shoppingmall
+    volumes:
+      - db-conf:/etc/mysql/my.cnf
+      - db-data:/var/lib/mysql
+      - db-log:/var/log/mysql
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:21.1.1
+    depends_on:
+      - shoppingmall-db
+    environment:
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://192.168.64.1:9001/keycloak
+      KC_DB_USERNAME: root
+      KC_DB_PASSWORD: qwe1212!Q
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: qwe1212!Q
+      KEYCLOAK_LOGLEVEL: DEBUG  
+      KC_LOG: console
+      KC_LOG_CONSOLE_COLOR: true
+      #KC_HTTPS_CERTIFICATE_FILE: /etc/ssl/certs/keycloak-cert.pem
+      #KC_HTTPS_CERTIFICATE_KEY_FILE: /etc/ssl/certs/keycloak-key.pem
+    ports:
+      - 9003:8080
+      - 8443:8443
+    command: ["start-dev"]    
+    networks:
+      - backend
+    #volumes:
+      #- /etc/ssl/certs:/etc/ssl/certs
+      #- ./providers:/opt/keycloak/providers
+
+
+
+networks:
+  backend:
+
+volumes:
+  db-conf:
+  db-data:
+  db-log:
+  kafka_volume01:
+  kafka_volume02:
+  kafka_volume03:
